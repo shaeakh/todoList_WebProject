@@ -5,6 +5,16 @@ const bodyParser = require('body-parser');
 app.use(bodyParser.json());
 let data = JSON.parse(fs.readFileSync('data.json'));
 
+const validateTask_POST_PUT_Method = (req, res, next) => {
+  const { title, description, status } = req.body;
+
+  // Check if title, description, and status are provided
+  if (!title || !description || !status) {
+    return res.status(400).json({ message: 'Title, description, and status are required' });
+  }
+  next();
+};
+
 app.get('/tasks', (req, res) => {
   try {
     res.status(201).send(data);
@@ -13,7 +23,7 @@ app.get('/tasks', (req, res) => {
   }
 });
 
-app.post('/tasks', (req, res) => {
+app.post('/tasks',validateTask_POST_PUT_Method, (req, res) => {
   try {
     const newTask = {
       id: data.length + 1,
@@ -29,7 +39,7 @@ app.post('/tasks', (req, res) => {
   }
 });
 
-app.put('/tasks/:id', (req, res) => {
+app.put('/tasks/:id',validateTask_POST_PUT_Method, (req, res) => {
   try {
     const taskId = parseInt(req.params.id);
     const updatedTask = req.body;
@@ -62,8 +72,6 @@ app.delete('/tasks/:id', (req, res) => {
   } catch (error) {
     res.status(404).json({ message: "Task didn't deleted " });
   }
-
-
 });
 
 const PORT = process.env.PORT || 3000;
