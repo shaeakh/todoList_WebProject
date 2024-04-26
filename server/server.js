@@ -13,6 +13,22 @@ app.get('/tasks', (req, res) => {
   }
 });
 
+app.post('/tasks',(req, res) => {
+  try {
+    const newTask = {
+      id: data.length + 1,
+      title: req.body.title,
+      description: req.body.description,
+      status: req.body.status
+    }
+    data.push(newTask);
+    fs.writeFileSync('data.json', JSON.stringify(data, null, 2));
+    res.status(201).json(data);
+  } catch (error) {
+    res.status(404).json({ message: "Task didn't posted" });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
