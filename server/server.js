@@ -13,7 +13,7 @@ app.get('/tasks', (req, res) => {
   }
 });
 
-app.post('/tasks',(req, res) => {
+app.post('/tasks', (req, res) => {
   try {
     const newTask = {
       id: data.length + 1,
@@ -45,6 +45,25 @@ app.put('/tasks/:id', (req, res) => {
   } catch (error) {
     res.status(404).json({ message: "Task didn't replaced " });
   }
+});
+
+app.delete('/tasks/:id', (req, res) => {
+  try {
+    const taskId = parseInt(req.params.id);
+    const taskIndex = data.findIndex(task => task.id === taskId);
+
+    if (taskIndex !== -1) {
+      data.splice(taskIndex, 1);
+      fs.writeFileSync('data.json', JSON.stringify(data, null, 2));
+      res.status(201).json(data);
+    } else {
+      res.status(404).json({ message: "Task doesn't exist " });
+    }
+  } catch (error) {
+    res.status(404).json({ message: "Task didn't deleted " });
+  }
+
+
 });
 
 const PORT = process.env.PORT || 3000;
