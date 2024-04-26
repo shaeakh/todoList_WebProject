@@ -29,6 +29,24 @@ app.post('/tasks',(req, res) => {
   }
 });
 
+app.put('/tasks/:id', (req, res) => {
+  try {
+    const taskId = parseInt(req.params.id);
+    const updatedTask = req.body;
+    const taskIndex = data.findIndex(task => task.id === taskId);
+
+    if (taskIndex !== -1) {
+      data[taskIndex] = { ...data[taskIndex], ...updatedTask };
+      fs.writeFileSync('data.json', JSON.stringify(data, null, 2));
+      res.status(201).json(data);
+    } else {
+      res.status(404).json({ message: "Task doesn't exist " });
+    }
+  } catch (error) {
+    res.status(404).json({ message: "Task didn't replaced " });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
