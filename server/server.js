@@ -15,12 +15,29 @@ const validateTask_POST_PUT_Method = (req, res, next) => {
   next();
 };
 
+const statusRank = {
+  "TO DO": 1,
+  "In Progress": 2,
+  "Completed": 3
+};
+
+
 app.get('/tasks', (req, res) => {
   try {
     res.status(201).send(data);
   } catch (error) {
     res.status(404).json({ message: 'Task not found' });
   }
+});
+
+app.get('/tasks/sortByStatus', (req, res) => {
+  try {
+    const sortedTasks = data.sort((a, b) => statusRank[a.status] - statusRank[b.status]);
+    res.status(201).json(sortedTasks);
+  } catch (error) {
+    res.status(404).json({ message: 'Task not found' });
+  }
+
 });
 
 app.post('/tasks',validateTask_POST_PUT_Method, (req, res) => {
