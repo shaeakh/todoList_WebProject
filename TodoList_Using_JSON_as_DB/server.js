@@ -48,6 +48,16 @@ app.get('/taskList/sortByStatus', (req, res) => {
   }
 });
 
+app.get('/taskList/search', (req, res) => {
+  try {
+    const { q } = req.query;
+    const searchResults = data.filter(task => task.title.toLowerCase().includes(q.toLowerCase()) || task.description.toLowerCase().includes(q.toLowerCase()));
+    res.status(201).json(searchResults);
+  } catch (error) {
+    res.status(404).json({ message: 'Task not found' });
+  }
+});
+
 app.post('/taskList',validateTask_POST_PUT_Method, (req, res) => {
   try {
     const newTask = {
@@ -98,6 +108,26 @@ app.delete('/taskList/:id', (req, res) => {
     res.status(404).json({ message: "Task didn't deleted " });
   }
 });
+
+
+app.patch('/taskList/:id', (req, res) => {
+  const taskId = parseInt(req.params.id);
+  const updates = req.body;
+  const taskIndex = data.findIndex(task => task.id === taskId);
+
+  try {
+    if (taskIndex !== -1) {    
+      data[taskIndex] = { ...data[taskIndex], ...updates };    
+      fs.writeFileSync('data.json', JSON.stringify(data, null, 2));    
+      res.status(200).json(data);
+    } else {
+      res.status(404).json({ message: 'Task not found' });
+    }
+  } catch (error) {
+    res.status(404).json({ message: "Task didn't updated" });
+  }  
+});
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
