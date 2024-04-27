@@ -22,7 +22,7 @@ const statusRank = {
 };
 
 
-app.get('/tasks', (req, res) => {
+app.get('/taskList', (req, res) => {
   try {
     res.status(201).send(data);
   } catch (error) {
@@ -30,17 +30,25 @@ app.get('/tasks', (req, res) => {
   }
 });
 
-app.get('/tasks/sortByStatus', (req, res) => {
+app.get('/taskList/sortById', (req, res) => {
+  try {
+    const sortedTasks = data.slice().sort((a, b) => a.id - b.id);
+    res.status(201).json(sortedTasks);
+  } catch (error) {
+    res.status(404).json({ message: 'Task not found' });
+  }
+});
+
+app.get('/taskList/sortByStatus', (req, res) => {
   try {
     const sortedTasks = data.sort((a, b) => statusRank[a.status] - statusRank[b.status]);
     res.status(201).json(sortedTasks);
   } catch (error) {
     res.status(404).json({ message: 'Task not found' });
   }
-
 });
 
-app.post('/tasks',validateTask_POST_PUT_Method, (req, res) => {
+app.post('/taskList',validateTask_POST_PUT_Method, (req, res) => {
   try {
     const newTask = {
       id: data.length + 1,
@@ -56,7 +64,7 @@ app.post('/tasks',validateTask_POST_PUT_Method, (req, res) => {
   }
 });
 
-app.put('/tasks/:id',validateTask_POST_PUT_Method, (req, res) => {
+app.put('/taskList/:id',validateTask_POST_PUT_Method, (req, res) => {
   try {
     const taskId = parseInt(req.params.id);
     const updatedTask = req.body;
@@ -74,7 +82,7 @@ app.put('/tasks/:id',validateTask_POST_PUT_Method, (req, res) => {
   }
 });
 
-app.delete('/tasks/:id', (req, res) => {
+app.delete('/taskList/:id', (req, res) => {
   try {
     const taskId = parseInt(req.params.id);
     const taskIndex = data.findIndex(task => task.id === taskId);
