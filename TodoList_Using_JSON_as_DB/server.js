@@ -15,6 +15,16 @@ const validateTask_POST_PUT_Method = (req, res, next) => {
   next();
 };
 
+const validateTask_PATCH_Method = (req, res, next) => {
+  const { title, description, status } = req.body;
+
+  // Check if title, description, and status are provided
+  if (!title && !description && !status) {
+    return res.status(400).json({ message: 'Title or description or status is required' });
+  }
+  next();
+};
+
 const statusRank = {
   "TO DO": 1,
   "In Progress": 2,
@@ -110,7 +120,7 @@ app.delete('/taskList/:id', (req, res) => {
 });
 
 
-app.patch('/taskList/:id', (req, res) => {
+app.patch('/taskList/:id',validateTask_PATCH_Method, (req, res) => {
   const taskId = parseInt(req.params.id);
   const updates = req.body;
   const taskIndex = data.findIndex(task => task.id === taskId);
