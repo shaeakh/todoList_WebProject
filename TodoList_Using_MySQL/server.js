@@ -33,12 +33,12 @@ app.get('/tasks/:u_id', (req, res) => {
 });
 
 app.post('/users', (req, res) => {     
-
-    const sqlInsert = "INSERT INTO tbl_users (u_name,email,_password,role) VALUES ('"+"','"+"','"+"','"+"'); ";
+    const sqlInsert = "INSERT INTO tbl_users (u_name,email,_password,role) VALUES ('"+req.body.u_name+"','"+req.body.email+"','"+req.body._password+"','"+req.body.role+"'); ";
     db.query(sqlInsert, (err, result) => {
-        console.log(result);
+        res.send(result);
     });
 });
+
 
 
 
