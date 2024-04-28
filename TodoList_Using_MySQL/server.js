@@ -3,6 +3,7 @@ const app = express();
 const mysql = require('mysql');
 const cors = require('cors');
 const { log } = require('console');
+const bcript = require('bcrypt');
 
 app.use(cors());
 app.use(express.json());
@@ -23,33 +24,34 @@ app.get('/users', (req, res) => {
     });
 });
 
-app.get('/tasks/:u_id', (req, res) => {
-    const u_id = req.params.u_id;
-    const sqlSelect = "SELECT * FROM `tbl_task` WHERE u_id = "+`${u_id}`+";";
-    console.log(sqlSelect);
+app.get('/tasks', (req, res) => {    
+    const sqlSelect = "SELECT * FROM `tbl_task` ;";    
     db.query(sqlSelect, (err, result) => {
         res.send(result);
     });
 });
 
-app.post('/users', (req, res) => {     
-    const sqlInsert = "INSERT INTO tbl_users (u_name,email,_password,role) VALUES ('"+req.body.u_name+"','"+req.body.email+"','"+req.body._password+"','"+req.body.role+"'); ";
-    db.query(sqlInsert, (err, result) => {
+app.get('/tasks/:u_id', (req, res) => {
+    const u_id = req.params.u_id;
+    const sqlSelect = "SELECT * FROM `tbl_task` WHERE u_id = "+`${u_id}`+";";    
+    db.query(sqlSelect, (err, result) => {
         res.send(result);
     });
 });
 
-
-const u_id = 1;
-    const t_id = 3;
-    const title = "title";
-    const description = "description";
-    const _status = "status";
-
-    const sqlInsert = "INSERT INTO tbl_task VALUES ("+`${u_id}`+","+`${t_id}`+",'"+title+"','"+description+"','"+_status+"');";
-
-    console.log(sqlInsert);
-
+app.post('/users', async (req, res) => {   
+    
+    try {
+        const salt = 10;
+        const hashedpass = await bcript.hash(req.body._password, salt);
+        const sqlInsert = "INSERT INTO tbl_users (u_name,email,_password,role) VALUES ('"+req.body.u_name+"','"+req.body.email+"','"+hashedpass+"','"+req.body.role+"'); ";
+        db.query(sqlInsert, (err, result) => {
+        res.status(201).send(result);
+         });
+    } catch (error) {
+        res.status(500).send(error);
+    }
+});
 
 app.post('/tasks/:u_id', (req, res) => {
     const u_id = req.params.u_id;
@@ -57,14 +59,39 @@ app.post('/tasks/:u_id', (req, res) => {
     const title = req.body.title;
     const description = req.body.description;
     const _status = req.body._status;
-
     const sqlInsert = "INSERT INTO tbl_task VALUES ("+`${u_id}`+","+`${t_id}`+",'"+title+"','"+description+"','"+_status+"');";
     db.query(sqlInsert, (err, result) => {
         res.send(result);
     });
-}); // Create a new task
+}); 
 
-
+app.post('/users/login', async (req, res) => {
+    const u_name = req.body.u_name;
+    const password = req.body._password;
+    const sqlSelect = "SELECT * FROM tbl_users WHERE u_name = '"+u_name+"';";
+    db.query(sqlSelect, async (err, result) => {
+        try {
+            if (err) {
+                res.status(500).send(err);
+                return;
+            }
+            if (result.length > 0) {
+                const validpass = await bcript.compare(password, result[0]._password);
+                if (validpass) {
+                    res.status(201).send('Success Login');
+                } else {
+                    res.status(400).send('Invalid Password');
+                }
+            } else {
+                res.status(400).send('Invalid Username');
+                return;
+            }   
+        } catch (error) {
+            res.status(500).send('Request Error');
+        } 
+    }
+    );
+}); 
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
