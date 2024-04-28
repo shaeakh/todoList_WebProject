@@ -40,6 +40,30 @@ app.post('/users', (req, res) => {
 });
 
 
+const u_id = 1;
+    const t_id = 3;
+    const title = "title";
+    const description = "description";
+    const _status = "status";
+
+    const sqlInsert = "INSERT INTO tbl_task VALUES ("+`${u_id}`+","+`${t_id}`+",'"+title+"','"+description+"','"+_status+"');";
+
+    console.log(sqlInsert);
+
+
+app.post('/tasks/:u_id', (req, res) => {
+    const u_id = req.params.u_id;
+    const t_id = req.body.t_id;
+    const title = req.body.title;
+    const description = req.body.description;
+    const _status = req.body._status;
+
+    const sqlInsert = "INSERT INTO tbl_task VALUES ("+`${u_id}`+","+`${t_id}`+",'"+title+"','"+description+"','"+_status+"');";
+    db.query(sqlInsert, (err, result) => {
+        res.send(result);
+    });
+}); // Create a new task
+
 
 
 app.listen(PORT, () => {
