@@ -1,9 +1,12 @@
+require('dotenv').config();
 const express = require('express');
 const app = express();
 const mysql = require('mysql');
 const cors = require('cors');
 const { log } = require('console');
 const bcript = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const { dot } = require('node:test/reporters');
 
 app.use(cors());
 app.use(express.json());
@@ -17,18 +20,26 @@ const db = mysql.createConnection({
     database: 'todolist_webproject',
 });
 
+function generateAccessToken(user){
+    return jwt.sign(user, process.env.ACCESS_TOKEN_SECRET,{expiresIn : '15s'});
+}
+
 app.get('/users', (req, res) => {
     const sqlSelect = "SELECT * FROM tbl_users";
     db.query(sqlSelect, (err, result) => {
+        
         res.send(result);
     });
 });
 
 app.get('/tasks', (req, res) => {    
-    const sqlSelect = "SELECT * FROM `tbl_task` ;";    
+    const sqlSelect = "SELECT * FROM `tbl_task` ;";   
+    const r = null; 
     db.query(sqlSelect, (err, result) => {
-        res.send(result);
+        console.log(result);
+        res.send(result);        
     });
+    
 });
 
 app.get('/tasks/:u_id', (req, res) => {
@@ -78,7 +89,10 @@ app.post('/users/login', async (req, res) => {
             if (result.length > 0) {
                 const validpass = await bcript.compare(password, result[0]._password);
                 if (validpass) {
-                    res.status(201).send('Success Login');
+                    const user = {u_name: u_name};
+                    const Token = generateAccessToken(user)
+                    const refreshToken = jwt.sign(user,process.env.REFRESH_TOKEN_SECRET)
+                    res.status(201).send({Token: Token, refreshToken: refreshToken});
                 } else {
                     res.status(400).send('Invalid Password');
                 }
