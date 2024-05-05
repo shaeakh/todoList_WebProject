@@ -20,27 +20,6 @@ const db = mysql.createConnection({
     database: 'todolist_webproject',
 });
 
-function generateAccessToken(user){
-    return jwt.sign(user, process.env.ACCESS_TOKEN_SECRET,{expiresIn : '600s'});
-}
-
-app.get('/users', (req, res) => {
-    const sqlSelect = "SELECT * FROM tbl_users";
-    db.query(sqlSelect, (err, result) => {        
-        res.send(result);
-    });
-});
-
-app.get('/tasks', (req, res) => {    
-    const sqlSelect = "SELECT * FROM `tbl_task` ;";   
-    const r = null; 
-    db.query(sqlSelect, (err, result) => {
-        console.log(result);
-        res.send(result);        
-    });
-    
-});
-
 function authenticateToken(req, res, next) {
     const authHeader = req.headers['authorization']
     
@@ -52,19 +31,44 @@ function authenticateToken(req, res, next) {
       req.user = user
       next()
     })
-  }
-  
-  
+  }  
+function generateAccessToken(user){
+    return jwt.sign(user, process.env.ACCESS_TOKEN_SECRET);
+}
 
-app.get('/tasks/users',authenticateToken, (req, res) => {      
-    const u_name = req.body.u_name;
-    let sqlSelect = "SELECT * FROM `tbl_users` WHERE u_name = '"+`${u_name}`+"';";        
+app.get('/users', authenticateToken, (req, res) => {
+    if(req.user.role==="admin"){
+        const sqlSelect = "SELECT * FROM tbl_users";
+        db.query(sqlSelect, (err, result) => {        
+            res.send(result);
+        });
+    }
+    else {
+        res.send("Only admins have access");
+    }
+    
+});
+
+app.get('/tasks', (req, res) => {    
+    const sqlSelect = "SELECT * FROM `tbl_task` ;";   
+    const r = null; 
     db.query(sqlSelect, (err, result) => {
-        sqlSelect = "SELECT * FROM `tbl_task` WHERE u_id = "+`${result.u_id}`+";";    
+        console.log(result);
+        res.send(result);        
+    });    
+});
+
+
+app.get('/tasks/users',authenticateToken, (req, res) => {
+    const u_name = req.user.u_name;       
+    console.log(u_name);
+    let sqlSelect = "SELECT * FROM `tbl_users` WHERE u_name = '"+`${u_name}`+"';";            
+    db.query(sqlSelect, (err, result) => {
+        sqlSelect = "SELECT * FROM `tbl_task` WHERE u_id = "+`${result[0].u_id}`+";";    
+        console.log(sqlSelect);        
         db.query(sqlSelect,(err,u_tasks)=>{
             res.send(u_tasks);
         })
-
     });
 });
 
@@ -107,7 +111,10 @@ app.post('/users/login', async (req, res) => {
             if (result.length > 0) {
                 const validpass = await bcript.compare(password, result[0]._password);
                 if (validpass) {
-                    const user = {u_name: u_name};
+                    const user = {
+                        u_name: result[0].u_name,
+                        role : result[0].role
+                    };
                     const Token = generateAccessToken(user)
                     const refreshToken = jwt.sign(user,process.env.REFRESH_TOKEN_SECRET)
                     res.status(201).send({Token: Token, refreshToken: refreshToken});
