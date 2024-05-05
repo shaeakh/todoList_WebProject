@@ -21,13 +21,12 @@ const db = mysql.createConnection({
 });
 
 function generateAccessToken(user){
-    return jwt.sign(user, process.env.ACCESS_TOKEN_SECRET,{expiresIn : '15s'});
+    return jwt.sign(user, process.env.ACCESS_TOKEN_SECRET,{expiresIn : '600s'});
 }
 
 app.get('/users', (req, res) => {
     const sqlSelect = "SELECT * FROM tbl_users";
-    db.query(sqlSelect, (err, result) => {
-        
+    db.query(sqlSelect, (err, result) => {        
         res.send(result);
     });
 });
@@ -42,11 +41,30 @@ app.get('/tasks', (req, res) => {
     
 });
 
-app.get('/tasks/:u_id', (req, res) => {
-    const u_id = req.params.u_id;
-    const sqlSelect = "SELECT * FROM `tbl_task` WHERE u_id = "+`${u_id}`+";";    
+function authenticateToken(req, res, next) {
+    const authHeader = req.headers['authorization']
+    
+    const token = authHeader && authHeader.split(' ')[1]    
+    if (token == null) return res.sendStatus(401)
+  
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {      
+      if (err) return res.sendStatus(403)
+      req.user = user
+      next()
+    })
+  }
+  
+  
+
+app.get('/tasks/users',authenticateToken, (req, res) => {      
+    const u_name = req.body.u_name;
+    let sqlSelect = "SELECT * FROM `tbl_users` WHERE u_name = '"+`${u_name}`+"';";        
     db.query(sqlSelect, (err, result) => {
-        res.send(result);
+        sqlSelect = "SELECT * FROM `tbl_task` WHERE u_id = "+`${result.u_id}`+";";    
+        db.query(sqlSelect,(err,u_tasks)=>{
+            res.send(u_tasks);
+        })
+
     });
 });
 
