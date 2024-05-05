@@ -21,8 +21,7 @@ const db = mysql.createConnection({
 });
 
 function authenticateToken(req, res, next) {
-    const authHeader = req.headers['authorization']
-    
+    const authHeader = req.headers['authorization']    
     const token = authHeader && authHeader.split(' ')[1]    
     if (token == null) return res.sendStatus(401)
   
@@ -42,6 +41,28 @@ app.get('/users', authenticateToken, (req, res) => {
         db.query(sqlSelect, (err, result) => {        
             res.send(result);
         });
+    }
+    else {
+        res.send("Only admins have access");
+    }
+    
+});
+
+app.patch('/role_cng', authenticateToken, (req, res) => {
+    
+    if(req.user.role==="admin"){   
+                   
+        if((req.body.u_name != null ) && (req.body.role != null )  ){            
+            const sqlSetrole = "UPDATE tbl_users SET role = '"+req.body.role+"' WHERE u_name = '" + req.body.u_name+"'; ";            
+            console.log(sqlSetrole);
+            db.query(sqlSetrole,(err,update)=>{
+                res.send(update);
+            })
+        }
+        else{
+            res.send('user_name and status is required !');
+        }
+
     }
     else {
         res.send("Only admins have access");
