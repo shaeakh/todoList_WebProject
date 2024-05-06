@@ -110,7 +110,23 @@ app.post('/user/profile', async (req, res) => {
 
 
         // check if user already exists
-        
+        // checking username 
+        let sqlSelect = "SELECT * FROM tbl_users WHERE u_name = '" + u_name + "';";
+        db.query(sqlSelect, (err, result) => {
+            if (result.length > 0) {
+                res.send("Username already exists");
+                return;
+            }
+        });
+
+        // checking email
+        sqlSelect = "SELECT * FROM tbl_users WHERE email = '" + email + "';";
+        db.query(sqlSelect, (err, result) => {
+            if (result.length > 0) {
+                res.send("Email already exists");
+                return;
+            }
+        });
 
 
         const salt = 10;
