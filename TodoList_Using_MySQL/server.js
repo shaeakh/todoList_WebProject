@@ -26,18 +26,15 @@ const db = mysql.createConnection({
 // implement all the features from JSON_as_DB project 
 // implement status code 
 
-let tokensConfirmation ;
-
-
 function authenticateToken(req, res, next) {
     const authHeader = req.headers['authorization']
-    const token = authHeader && authHeader.split(' ')[1]
-    if (token == null || tokensConfirmation !=token ) {
+    let token = authHeader && authHeader.split(' ')[1]    
+    
+    if (token === null ) {
         return res.sendStatus(401)
-    }
-    // if(tokensConfirmation!= null && tokensConfirmation !=token ) return res.sendStatus(401)       
+    }    
     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
-        if (err) return res.sendStatus(403)            
+        if (err) return res.sendStatus("this is a error \n",403)            
         req.user = user
         next()
     })
@@ -68,7 +65,7 @@ app.delete('/users', authenticateToken, (req, res) => {
         const u_name = req.body.u_name;
 
         const selectsql = "SELECT * FROM tbl_users WHERE u_name = '" + u_name + "';";
-
+        console.log(selectsql);
         db.query(selectsql, (err, result) => {
             if (result.length > 0) {
                 const u_id = result[0].u_id;
@@ -111,7 +108,9 @@ app.post('/user/profile', async (req, res) => {
             return;
         }
 
+
         // check if user already exists
+        
 
 
         const salt = 10;
@@ -211,7 +210,6 @@ app.get('/tasks',authenticateToken, (req, res) => {
     }    
 });
 
-
 app.get('/users/tasks', authenticateToken, (req, res) => {
     const u_name = req.user.u_name;
     let sqlSelect = "SELECT * FROM `tbl_users` WHERE u_name = '" + `${u_name}` + "';";
@@ -221,6 +219,29 @@ app.get('/users/tasks', authenticateToken, (req, res) => {
             res.send(u_tasks);
         })
     });
+});
+
+app.get('/users/tasks/sorted_id', authenticateToken, (req, res) => {
+    const u_name = req.user.u_name;
+    let sqlSelect = "SELECT * FROM `tbl_users` WHERE u_name = '" + `${u_name}` + "';";
+    db.query(sqlSelect, (err, result) => {
+        sqlSelect = "SELECT * FROM `tbl_task` WHERE u_id = " + `${result[0].u_id}` + ";";        
+        db.query(sqlSelect, (err, u_tasks) => {
+            u_tasks.sort((a, b) => a.t_id - b.t_id);
+            res.send(u_tasks);
+        })
+    });  
+});
+
+app.get('/users/tasks/sorted_staus', authenticateToken, (req, res) => {
+    const u_name = req.user.u_name;
+    let sqlSelect = "SELECT * FROM `tbl_users` WHERE u_name = '" + `${u_name}` + "';";
+    db.query(sqlSelect, (err, result) => {
+        sqlSelect = "SELECT * FROM `tbl_task` WHERE u_id = " + `${result[0].u_id}` + " ORDER BY `tbl_task`.`_status` ASC;";        
+        db.query(sqlSelect, (err, u_tasks) => {
+            res.send(u_tasks);
+        })
+    });  
 });
 
 
@@ -321,12 +342,11 @@ app.delete('/users/tasks/:t_id', authenticateToken, (req, res) => {
 app.post('/users/login', async (req, res) => {
     const u_name = req.body.u_name;    
     const password = req.body._password;
-    const sqlSelect = "SELECT * FROM tbl_users WHERE u_name = '" + u_name + "';";
-    // console.log(u_name, password, sqlSelect);
+    const sqlSelect = "SELECT * FROM tbl_users WHERE u_name = '" + u_name + "';";    
     db.query(sqlSelect, async (err, result) => {
         try {
             if (err) {
-                res.status(500).send(err);
+                res.status(500).send("hehehe",err);
                 return;
             }
             if (result.length > 0) {
@@ -336,9 +356,7 @@ app.post('/users/login', async (req, res) => {
                         u_name: result[0].u_name,
                         role: result[0].role
                     };
-                    const Token = generateAccessToken(user)    
-                    tokensConfirmation = Token;
-                    console.log(tokensConfirmation);
+                    const Token = generateAccessToken(user) 
                     res.status(201).send({status : "Succesfully Logged in ",Token : Token});
                 } else {
                     res.status(400).send('Invalid Password');
@@ -354,10 +372,7 @@ app.post('/users/login', async (req, res) => {
     );
 });
 
-
-
 app.delete('/users/login', (req, res) => {
-    tokensConfirmation = null;
     res.send("Logged out");
 })
 
