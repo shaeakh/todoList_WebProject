@@ -3,25 +3,24 @@ const express = require('express');
 const app = express();
 const mysql = require('mysql');
 const cors = require('cors');
-const { log } = require('console');
 const bcript = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { dot } = require('node:test/reporters');
-const fs = require('fs');
 const bodyParser = require('body-parser');
 app.use(bodyParser.json());
 app.use(cors());
 app.use(express.json());
+
+const db = require('./database.js');
+
 const PORT = 3000;
+// //use schema 
 
-
-//use schema 
-const db = mysql.createConnection({
-    user: 'root',
-    host: 'localhost',
-    password: '',
-    database: 'todolist_webproject',
-});
+// const db = mysql.createConnection({
+//     user: 'root',
+//     host: 'localhost',
+//     password: '',
+//     database: 'todolist_webproject',
+// });
 
 // implement all the features from JSON_as_DB project 
 // implement status code 
@@ -107,7 +106,6 @@ app.post('/user/profile', async (req, res) => {
             res.send('u_name, email and password is required !');
             return;
         }
-
 
         // check if user already exists
         // checking username 
