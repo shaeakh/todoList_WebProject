@@ -44,6 +44,7 @@ function generateAccessToken(user) {
     return jwt.sign(user, process.env.ACCESS_TOKEN_SECRET);
 }
 
+
 app.get('/users', authenticateToken, (req, res) => {
 
     // implement try catch 
@@ -58,6 +59,7 @@ app.get('/users', authenticateToken, (req, res) => {
         res.send("Only admin can see the user list");
     }
 });
+
 
 app.delete('/users', authenticateToken, (req, res) => {
     if (req.user.role === "admin") {
@@ -88,6 +90,7 @@ app.delete('/users', authenticateToken, (req, res) => {
     }
 });
 
+
 app.get('/user/profile', authenticateToken, (req, res) => {
     const u_name = req.user.u_name;
     const selectsql = "SELECT * FROM tbl_users WHERE u_name = '" + u_name + "';";
@@ -95,6 +98,7 @@ app.get('/user/profile', authenticateToken, (req, res) => {
         res.send(result);
     })
 })
+
 
 app.post('/user/profile', async (req, res) => {
     try {
@@ -125,8 +129,6 @@ app.post('/user/profile', async (req, res) => {
                 return;
             }
         });
-
-
         const salt = 10;
         const hashedpass = await bcript.hash(req.body._password, salt);
         const sqlInsert = "INSERT INTO tbl_users (u_name,email,_password,role) VALUES ('" + req.body.u_name + "','" + req.body.email + "','" + hashedpass + "','" + "regular_user'); ";
@@ -186,6 +188,7 @@ app.patch('/user/profile', authenticateToken, async (req, res) => {
     })
 });
 
+
 app.delete('/user/profile', authenticateToken, (req, res) => {
     const u_name = req.user.u_name;
     const current_password = req.body.current_password;
@@ -211,6 +214,7 @@ app.delete('/user/profile', authenticateToken, (req, res) => {
     });
 })
 
+
 app.get('/tasks',authenticateToken, (req, res) => {
     if (req.user.role === "admin") {
         const sqlSelect = "SELECT * FROM `tbl_task` ;";
@@ -223,6 +227,7 @@ app.get('/tasks',authenticateToken, (req, res) => {
         res.send("only an admin can see all the tasks");
     }    
 });
+
 
 app.get('/users/tasks', authenticateToken, (req, res) => {
     const u_name = req.user.u_name;
@@ -257,7 +262,6 @@ app.get('/users/tasks/sorted_staus', authenticateToken, (req, res) => {
         })
     });  
 });
-
 
 app.get('/users/tasks/:t_id', authenticateToken, (req, res) => {
     const u_name = req.user.u_name;
@@ -403,7 +407,6 @@ app.patch('/role_cng', authenticateToken, (req, res) => {
         else {
             res.send('user_name and status is required !');
         }
-
     }
     else {
         res.send("Only admins have access");
