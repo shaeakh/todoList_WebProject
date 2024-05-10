@@ -27,13 +27,13 @@ const PORT = 3000;
 
 function authenticateToken(req, res, next) {
     const authHeader = req.headers['authorization']
-    let token = authHeader && authHeader.split(' ')[1]    
-    
-    if (token === null ) {
+    let token = authHeader && authHeader.split(' ')[1]
+
+    if (token === null) {
         return res.sendStatus(401)
-    }    
+    }
     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
-        if (err) return res.sendStatus("this is a error \n",403)            
+        if (err) return res.sendStatus("this is a error \n", 403)
         req.user = user
         next()
     })
@@ -70,7 +70,7 @@ app.delete('/users', authenticateToken, (req, res) => {
                 const u_id = result[0].u_id;
 
                 let sqlDelete = "DELETE FROM tbl_task WHERE u_id = " + u_id + ";";
-                
+
                 db.query(sqlDelete, (err, result) => {
                     sqlDelete = "DELETE FROM tbl_users WHERE u_id = " + u_id + ";";
                     db.query(sqlDelete, (err, result) => {
@@ -96,45 +96,45 @@ app.get('/user/profile', authenticateToken, (req, res) => {
     })
 })
 
+
+
 app.post('/user/profile', async (req, res) => {
     try {
         const u_name = req.body.u_name;
         const email = req.body.email;
         const _password = req.body._password;
+        let brk = false;
 
         if ((u_name == null) || (email == null) || (_password == null)) {
-            res.send('u_name, email and password is required !');
-            return;
+            return res.send('u_name, email and password is required !');
         }
         let sqlSelect = "SELECT * FROM tbl_users WHERE u_name = '" + u_name + "';";
         db.query(sqlSelect, (err, result) => {
             if (result.length > 0) {
-                res.send("Username already exists");
-                return;
+                return res.send("Username already exists");
             }
-        });
-
-        // checking email
-        sqlSelect = "SELECT * FROM tbl_users WHERE email = '" + email + "';";
-        db.query(sqlSelect, (err, result) => {
-            if (result.length > 0) {
-                res.send("Email already exists");
-                return;
+            else {
+                sqlSelect = "SELECT * FROM tbl_users WHERE email = '" + email + "';";
+                db.query(sqlSelect, async (err, result) => {
+                    if (result.length > 0) {
+                        brk = true;
+                        return res.send("Email already exists");
+                    }
+                    else {
+                        const salt = 10;
+                        const hashedpass = await bcript.hash(req.body._password, salt);
+                        const sqlInsert = "INSERT INTO tbl_users (u_name,email,_password,role) VALUES ('" + req.body.u_name + "','" + req.body.email + "','" + hashedpass + "','" + "regular_user'); ";
+                        db.query(sqlInsert, (err, result) => {
+                            return res.status(201).send(result);
+                        });
+                    }
+                });
             }
-        });
-
-
-        const salt = 10;
-        const hashedpass = await bcript.hash(req.body._password, salt);
-        const sqlInsert = "INSERT INTO tbl_users (u_name,email,_password,role) VALUES ('" + req.body.u_name + "','" + req.body.email + "','" + hashedpass + "','" + "regular_user'); ";
-        db.query(sqlInsert, (err, result) => {
-            res.status(201).send(result);
         });
     } catch (error) {
         res.status(500).send(error);
     }
 });
-
 
 app.patch('/user/profile', authenticateToken, async (req, res) => {
     const new_u_name = req.body.u_name;
@@ -147,7 +147,7 @@ app.patch('/user/profile', authenticateToken, async (req, res) => {
 
     const selectsql = "SELECT * FROM tbl_users WHERE u_name = '" + u_name + "';";
     db.query(selectsql, async (err, result) => {
-
+        console.log("sdaihgd");
         validpass = await bcript.compare(current_password, result[0]._password);
         if (validpass) {
             const u_id = result[0].u_id;
@@ -189,10 +189,10 @@ app.delete('/user/profile', authenticateToken, (req, res) => {
     console.log(current_password);
     let selectsql = "SELECT * FROM tbl_users WHERE u_name = '" + u_name + "';";
     db.query(selectsql, async (err, result) => {
-        
+
         const validpass = await bcript.compare(current_password, result[0]._password);
         if (validpass) {
-            const u_id = result[0].u_id;            
+            const u_id = result[0].u_id;
             let sqlDelete = "DELETE FROM tbl_task WHERE u_id = " + u_id + ";";
             console.log(sqlDelete);
             db.query(sqlDelete, (err, result) => {
@@ -200,7 +200,7 @@ app.delete('/user/profile', authenticateToken, (req, res) => {
                 db.query(sqlDelete, (err, result) => {
                     res.send(result);
                 });
-            });                
+            });
         }
         else {
             res.send("password invalid");
@@ -208,17 +208,17 @@ app.delete('/user/profile', authenticateToken, (req, res) => {
     });
 })
 
-app.get('/tasks',authenticateToken, (req, res) => {
+app.get('/tasks', authenticateToken, (req, res) => {
     if (req.user.role === "admin") {
         const sqlSelect = "SELECT * FROM `tbl_task` ;";
         const r = null;
-        db.query(sqlSelect, (err, result) => {            
+        db.query(sqlSelect, (err, result) => {
             res.send(result);
         });
     }
     else {
         res.send("only an admin can see all the tasks");
-    }    
+    }
 });
 
 app.get('/users/tasks', authenticateToken, (req, res) => {
@@ -236,23 +236,23 @@ app.get('/users/tasks/sorted_id', authenticateToken, (req, res) => {
     const u_name = req.user.u_name;
     let sqlSelect = "SELECT * FROM `tbl_users` WHERE u_name = '" + `${u_name}` + "';";
     db.query(sqlSelect, (err, result) => {
-        sqlSelect = "SELECT * FROM `tbl_task` WHERE u_id = " + `${result[0].u_id}` + ";";        
+        sqlSelect = "SELECT * FROM `tbl_task` WHERE u_id = " + `${result[0].u_id}` + ";";
         db.query(sqlSelect, (err, u_tasks) => {
             u_tasks.sort((a, b) => a.t_id - b.t_id);
             res.send(u_tasks);
         })
-    });  
+    });
 });
 
 app.get('/users/tasks/sorted_staus', authenticateToken, (req, res) => {
     const u_name = req.user.u_name;
     let sqlSelect = "SELECT * FROM `tbl_users` WHERE u_name = '" + `${u_name}` + "';";
     db.query(sqlSelect, (err, result) => {
-        sqlSelect = "SELECT * FROM `tbl_task` WHERE u_id = " + `${result[0].u_id}` + " ORDER BY `tbl_task`.`_status` ASC;";        
+        sqlSelect = "SELECT * FROM `tbl_task` WHERE u_id = " + `${result[0].u_id}` + " ORDER BY `tbl_task`.`_status` ASC;";
         db.query(sqlSelect, (err, u_tasks) => {
             res.send(u_tasks);
         })
-    });  
+    });
 });
 
 
@@ -261,7 +261,7 @@ app.get('/users/tasks/:t_id', authenticateToken, (req, res) => {
     const t_id = req.params.t_id;
     let sqlSelect = "SELECT * FROM `tbl_users` WHERE u_name = '" + `${u_name}` + "';";
     db.query(sqlSelect, (err, result) => {
-        sqlSelect = "SELECT * FROM `tbl_task` WHERE u_id = " + `${result[0].u_id}` + "&& t_id = "+`${t_id}`+" ;";
+        sqlSelect = "SELECT * FROM `tbl_task` WHERE u_id = " + `${result[0].u_id}` + "&& t_id = " + `${t_id}` + " ;";
         db.query(sqlSelect, (err, ut_tasks) => {
             res.send(ut_tasks);
         })
@@ -296,11 +296,11 @@ app.patch('/users/tasks/:t_id', authenticateToken, (req, res) => {
     const new_status = req.body._status;
     const t_id = req.params.t_id;
 
-    if(new_title === null && new_description === null && new_status === null){
+    if (new_title === null && new_description === null && new_status === null) {
         res.send("invalid update");
         return;
     }
-    
+
     const u_name = req.user.u_name;
     let sqlSelect = "SELECT * FROM `tbl_users` WHERE u_name = '" + `${u_name}` + "';";
     db.query(sqlSelect, (err, result) => {
@@ -312,25 +312,25 @@ app.patch('/users/tasks/:t_id', authenticateToken, (req, res) => {
         // WHERE u_id = 9 && t_id = 1 ;
 
 
-        if(new_title!=null){
-            updateSql = "UPDATE tbl_task SET title = '"+new_title+"' WHERE u_id = "+`${u_id}`+" &&  t_id = "+`${t_id}`+" ;"
+        if (new_title != null) {
+            updateSql = "UPDATE tbl_task SET title = '" + new_title + "' WHERE u_id = " + `${u_id}` + " &&  t_id = " + `${t_id}` + " ;"
             db.query(updateSql, (err, result) => { })
         }
-        if(new_description!=null){
-            updateSql = "UPDATE tbl_task SET description = '"+new_description+"' WHERE u_id = "+`${u_id}`+" &&  t_id = "+`${t_id}`+" ;"
+        if (new_description != null) {
+            updateSql = "UPDATE tbl_task SET description = '" + new_description + "' WHERE u_id = " + `${u_id}` + " &&  t_id = " + `${t_id}` + " ;"
             db.query(updateSql, (err, result) => { })
         }
-        if(new_status!=null){
-            updateSql = "UPDATE tbl_task SET _status = '"+new_status+"' WHERE u_id = "+`${u_id}`+" &&  t_id = "+`${t_id}`+" ;"
+        if (new_status != null) {
+            updateSql = "UPDATE tbl_task SET _status = '" + new_status + "' WHERE u_id = " + `${u_id}` + " &&  t_id = " + `${t_id}` + " ;"
             db.query(updateSql, (err, result) => { })
         }
         // sqlSelect = "SELECT * FROM `tbl_task` WHERE u_id = " + `${u_id}` + ";";
         // db.query(sqlSelect, (err, result) => {})
 
-        const selectsql = "SELECT * FROM tbl_task WHERE u_id = "+`${u_id}`+" &&  t_id = "+`${t_id}`+" ;"
-            db.query(selectsql, (err, result) => {
-                res.send(result);
-            })
+        const selectsql = "SELECT * FROM tbl_task WHERE u_id = " + `${u_id}` + " &&  t_id = " + `${t_id}` + " ;"
+        db.query(selectsql, (err, result) => {
+            res.send(result);
+        })
     })
 
 
@@ -342,22 +342,22 @@ app.delete('/users/tasks/:t_id', authenticateToken, (req, res) => {
     const u_name = req.user.u_name;
     let selectsql = "SELECT * FROM tbl_users WHERE u_name = '" + u_name + "';";
     db.query(selectsql, async (err, result) => {
-        const u_id = result[0].u_id;                    
-        let sqlDelete = "DELETE FROM tbl_task WHERE u_id = " + `${u_id}` + " &&  t_id = "+ `${t_id}` +";";
-        db.query(sqlDelete,(err,result)=>{
+        const u_id = result[0].u_id;
+        let sqlDelete = "DELETE FROM tbl_task WHERE u_id = " + `${u_id}` + " &&  t_id = " + `${t_id}` + ";";
+        db.query(sqlDelete, (err, result) => {
             res.send(result);
         });
     });
 });
 
 app.post('/users/login', async (req, res) => {
-    const u_name = req.body.u_name;    
+    const u_name = req.body.u_name;
     const password = req.body._password;
-    const sqlSelect = "SELECT * FROM tbl_users WHERE u_name = '" + u_name + "';";    
+    const sqlSelect = "SELECT * FROM tbl_users WHERE u_name = '" + u_name + "';";
     db.query(sqlSelect, async (err, result) => {
         try {
             if (err) {
-                res.status(500).send("hehehe",err);
+                res.status(500).send("hehehe", err);
                 return;
             }
             if (result.length > 0) {
@@ -367,8 +367,8 @@ app.post('/users/login', async (req, res) => {
                         u_name: result[0].u_name,
                         role: result[0].role
                     };
-                    const Token = generateAccessToken(user) 
-                    res.status(201).send({status : "Succesfully Logged in ",Token : Token});
+                    const Token = generateAccessToken(user)
+                    res.status(201).send({ status: "Succesfully Logged in ", Token: Token });
                 } else {
                     res.status(400).send('Invalid Password');
                 }
@@ -392,7 +392,7 @@ app.patch('/role_cng', authenticateToken, (req, res) => {
     if (req.user.role === "admin") {
         if ((req.body.u_name != null) && (req.body.role != null)) {
             const sqlSetrole = "UPDATE tbl_users SET role = '" + req.body.role + "' WHERE u_name = '" + req.body.u_name + "'; ";
-            
+
             db.query(sqlSetrole, (err, update) => {
                 res.send(update);
             })
